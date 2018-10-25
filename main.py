@@ -2,8 +2,8 @@ import time
 import requests
 import json
 import execjs
-from PIL import Image, ImageChops
-from ImageHandle import handle, calculate_x
+from PIL import Image
+from picture import ImageHandler
 import logging
 
 
@@ -62,7 +62,7 @@ def api_get():
     return data
 
 
-def get_image(data):
+def get_pos(data):
     bg_url = 'http://static.geetest.com/' + data['bg']
     bg_response = session.get(url=bg_url, headers=headers)
     with open('bg.jpg', 'wb') as f:
@@ -73,14 +73,8 @@ def get_image(data):
     with open('fullbg.jpg', 'wb') as f:
         f.write(fullbg_response.content)
 
-    bg = handle(Image.open('bg.jpg'))
-    fullbg = handle(Image.open('fullbg.jpg'))
-
-    image = ImageChops.difference(fullbg, bg)
-    image = image.point(lambda x: 255 if x > 80 else 0)
-    image = image.resize((260, 160), Image.ANTIALIAS)
-    image.save('diff.jpg')
-    return calculate_x(image)
+    pos = ImageHandler.subtract(Image.open('bg.jpg'), Image.open('fullbg.jpg'))
+    return pos
 
 
 def api_ajax(x, data):
@@ -119,7 +113,7 @@ if __name__ == '__main__':
     print(res1)
 
     api_get_result = api_get()
-    slider_x = get_image(api_get_result)
+    slider_x = get_pos(api_get_result)
     logging.info('滑块到达位置：{x}'.format(x=slider_x))
     time.sleep(1)
 
