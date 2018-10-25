@@ -22,9 +22,9 @@ def gettype():
 def get_and_ajax():
     with open('fullpage.js', 'r', encoding='utf-8') as f:
         source = f.read()
-        phantom = execjs.get('Node')
-        getpass = phantom.compile(source)
-        E, w_get = getpass.call('outside_link', challenge, gt)
+
+    getpass = node.compile(source)
+    E, w_get = getpass.call('outside_link', challenge, gt)
 
     get_url = 'http://api.geetest.com/get.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}'.format(gt=gt, challenge=challenge, lang='zh-cn', w=w_get)
     get_response = session.get(url=get_url, headers=headers)
@@ -32,9 +32,9 @@ def get_and_ajax():
 
     with open('fullpage2.js', 'r', encoding='utf-8') as f:
         source = f.read()
-        phantom = execjs.get('Node')
-        getpass = phantom.compile(source)
-        w_ajax = getpass.call('outside_link', challenge, gt, E, data)
+
+    getpass = node.compile(source)
+    w_ajax = getpass.call('outside_link', challenge, gt, E, data)
 
     ajax_url = 'http://api.geetest.com/ajax.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}'.format(gt=gt, challenge=challenge, lang='zh-cn', w=w_ajax)
     response = session.get(url=ajax_url, headers=headers)
@@ -86,9 +86,9 @@ def get_image(data):
 def api_ajax(x, data):
     with open('slide.js', 'r', encoding='utf-8') as f:
         source = f.read()
-        phantom = execjs.get('Node')
-        getpass = phantom.compile(source)
-        w = getpass.call('outside_link', x, data)
+
+    getpass = node.compile(source)
+    w = getpass.call('outside_link', x, data)
 
     url = 'http://api.geetest.com/ajax.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}'.format(gt=data['gt'], challenge=data['challenge'], lang='zh-cn', w=w)
     response = session.get(url=url, headers=headers)
@@ -110,6 +110,7 @@ if __name__ == '__main__':
         format="[%(asctime)s] %(levelname)s: %(message)s",
     )
     session = requests.Session()
+    node = execjs.get('Node')
 
     logging.info('开始滑动验证！')
     gt, challenge = register()
