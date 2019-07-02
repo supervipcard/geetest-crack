@@ -8,15 +8,11 @@ import logging
 
 
 def register():
-    url = 'http://www.geetest.com/type/gt/register?type=1'
+    url = 'https://www.geetest.com/demo/gt/register-slide-official?t={}'.format(int(time.time()*1000))
     response = session.get(url=url, headers=headers)
+    print(response.text)
     data = json.loads(response.text)
     return data['gt'], data['challenge']
-
-
-def gettype():
-    url = 'http://api.geetest.com/gettype.php'
-    response = session.get(url=url, headers=headers, params={'gt': gt})
 
 
 def get_and_ajax():
@@ -26,9 +22,9 @@ def get_and_ajax():
     getpass = node.compile(source)
     E, w_get = getpass.call('outside_link', challenge, gt)
 
-    get_url = 'http://api.geetest.com/get.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}'.format(gt=gt, challenge=challenge, lang='zh-cn', w=w_get)
+    get_url = 'https://api.geetest.com/get.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}&callback=geetest_{t}'.format(gt=gt, challenge=challenge, lang='zh-cn', w=w_get, t=int(time.time()*1000))
     get_response = session.get(url=get_url, headers=headers)
-    data = json.loads(get_response.text[1: -1])['data']
+    data = json.loads(get_response.text[22: -1])['data']
 
     with open('fullpage2.js', 'r', encoding='utf-8') as f:
         source = f.read()
@@ -36,39 +32,39 @@ def get_and_ajax():
     getpass = node.compile(source)
     w_ajax = getpass.call('outside_link', challenge, gt, E, data)
 
-    ajax_url = 'http://api.geetest.com/ajax.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}'.format(gt=gt, challenge=challenge, lang='zh-cn', w=w_ajax)
+    ajax_url = 'https://api.geetest.com/ajax.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}&callback=geetest_{t}'.format(gt=gt, challenge=challenge, lang='zh-cn', w=w_ajax, t=int(time.time()*1000))
     response = session.get(url=ajax_url, headers=headers)
-    return json.loads(response.text[1: -1])
+    return json.loads(response.text[22: -1])
 
 
 def api_get():
-    url = 'http://api.geetest.com/get.php'
+    url = 'https://api.geetest.com/get.php'
     params = {
         'is_next': 'true',
         'type': 'slide3',
         'gt': gt,
         'challenge': challenge,
         'lang': 'zh-cn',
-        'https': 'false',
-        'protocol': 'http://',
+        'https': 'true',
+        'protocol': 'https://',
         'offline': 'false',
-        'product': 'popup',
+        'product': 'embed',
         'api_server': 'api.geetest.com',
         'width': '100%',
-        'callback': 'geetest',
+        'callback': 'geetest_{}'.format(int(time.time()*1000)),
     }
     response = session.get(url=url, headers=headers, params=params)
-    data = json.loads(response.text[8: -1])
+    data = json.loads(response.text[22: -1])
     return data
 
 
 def get_pos(data):
-    bg_url = 'http://static.geetest.com/' + data['bg']
+    bg_url = 'https://static.geetest.com/' + data['bg']
     bg_response = session.get(url=bg_url, headers=headers)
     with open('bg.jpg', 'wb') as f:
         f.write(bg_response.content)
 
-    fullbg_url = 'http://static.geetest.com/' + data['fullbg']
+    fullbg_url = 'https://static.geetest.com/' + data['fullbg']
     fullbg_response = session.get(url=fullbg_url, headers=headers)
     with open('fullbg.jpg', 'wb') as f:
         f.write(fullbg_response.content)
@@ -84,9 +80,9 @@ def api_ajax(x, data):
     getpass = node.compile(source)
     w = getpass.call('outside_link', x, data)
 
-    url = 'http://api.geetest.com/ajax.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}'.format(gt=data['gt'], challenge=data['challenge'], lang='zh-cn', w=w)
+    url = 'https://api.geetest.com/ajax.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}&callback=geetest_{t}'.format(gt=data['gt'], challenge=data['challenge'], lang='zh-cn', w=w, t=int(time.time()*1000))
     response = session.get(url=url, headers=headers)
-    return json.loads(response.text[1: -1])
+    return json.loads(response.text[22: -1])
 
 
 if __name__ == '__main__':
@@ -108,7 +104,6 @@ if __name__ == '__main__':
 
     logging.info('开始滑动验证！')
     gt, challenge = register()
-    gettype()
     res1 = get_and_ajax()
     print(res1)
 
