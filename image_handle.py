@@ -8,7 +8,6 @@ class ImageHandler(object):
         image = ImageChops.difference(cls.spell(fullbg), cls.spell(bg))
         image = image.point(lambda x: 255 if x > 80 else 0)
         image = image.resize((260, 160), Image.ANTIALIAS)
-        image.save('diff.jpg')
         return cls.calculate_x(image)
 
     @staticmethod
@@ -21,11 +20,12 @@ class ImageHandler(object):
         }
         mapping = {value: key for key, value in mapping_before_exchange.items()}
 
+        w, h = image.size
         matrix = np.array(image)
-        m1 = matrix[0: 80]
-        m2 = matrix[80: 160]
-        s1 = [np.array([i[j: j + 12] for i in m1]) for j in range(0, 312, 12)]
-        s2 = [np.array([i[j: j + 12] for i in m2]) for j in range(0, 312, 12)]
+        m1 = matrix[0: h//2]
+        m2 = matrix[h//2: h]
+        s1 = [np.array([i[j: j + w//26] for i in m1]) for j in range(0, w, w//26)]
+        s2 = [np.array([i[j: j + w//26] for i in m2]) for j in range(0, w, w//26)]
         s = s1 + s2
 
         dic = {key: value for key, value in enumerate(s)}
@@ -34,13 +34,13 @@ class ImageHandler(object):
         lis = [i[1] for i in sorted(dic_exchange.items(), key=lambda x: x[0])]
 
         n = []
-        for i in range(80):
+        for i in range(h//2):
             n1 = []
             for j in lis[0: 26]:
                 n1.extend(list(j[i]))
             n.append(n1)
 
-        for i in range(80):
+        for i in range(h//2):
             n2 = []
             for j in lis[26: 52]:
                 n2.extend(list(j[i]))

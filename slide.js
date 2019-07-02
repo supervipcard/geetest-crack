@@ -3949,13 +3949,10 @@ total_func = function() {
                                 switch (F6d) {
                                     case r7S.R7S()[26][21][3]:
                                         var p00 = this;
-
                                         for (var p in res){
                                             p00['B'][p]=res[p];
                                         }
-
-                                            var J00 = p00[r7S.U4X(376)]
-                                            , H00 = {
+                                        var J00 = p00[r7S.U4X(376)], H00 = {
                                             '\x6c\x61\x6e\x67': J00[r7S.U4X(569)] || r7S.U4X(439),
                                             '\x75\x73\x65\x72\x72\x65\x73\x70\x6f\x6e\x73\x65': Y3(Y00, J00[r7S.V4X(281)]),
                                             '\x70\x61\x73\x73\x74\x69\x6d\x65': U00,
@@ -4310,7 +4307,7 @@ total_func = function() {
                         }
                     }
 
-                    function get_pass(x, res) {
+                    function get_pass(x, points, res) {
                         var data = {
                             api_server: "api.geetest.com",
                             challenge: res['challenge'],
@@ -4330,28 +4327,13 @@ total_func = function() {
                             width: "100%",
                         };
                         var target_func = new b8(data),
-                            target_func2 = new Y8([-38, -35, 0]);
-
-                        var time_interval = 0, horizontal = 0;
-                        target_func2['Fb'].push([horizontal, 0, time_interval]);
-
-                        horizontal = horizontal + Math.floor(Math.random()*5) + 1;
-                        time_interval = time_interval + 120;
-
-                        while(horizontal < x-1){
-                            target_func2['Fb'].push([horizontal, 0, time_interval]);
-
-                            horizontal = horizontal + Math.floor(Math.random()*5) + 1;
-                            time_interval = time_interval + Math.floor(Math.random()*20) + 10;
+                            target_func2 = new Y8([-40, -35, 0]);
+                        for (var i in points){
+                            target_func2['Fb'].push(points[i]);
                         }
-                        target_func2['Fb'].push([x-1, -1, time_interval + 22]);
-                        target_func2['Fb'].push([x, -1, time_interval + 120]);
-                        target_func2['Fb'].push([x, -1, time_interval + 350]);
-
                         var p1 = x,
                             p3 = target_func2['Fb'][target_func2['Fb'].length-1][2],
                             p2 = target_func2[r7S.V4X(104)](target_func2[r7S.V4X(528)](), res['c'], res['s']);
-
                         return target_func['ea'](p1, p2, p3, res);
                     }
 
@@ -4361,9 +4343,9 @@ total_func = function() {
                 break;
         }
     }
-}
+};
 
-outside_link = function (x, res) {
+outside_link = function (x, points, res) {
     var a = total_func();
-    return a(x, res);
+    return a(x, points, res);
 };
