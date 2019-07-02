@@ -29,7 +29,7 @@ class Geetest:
         self.challenge = api_get_result['challenge']
         self.gt = api_get_result['gt']
         slider_x = self.get_pos(api_get_result['bg'], api_get_result['fullbg'])  # 获取图片缺口坐标
-        time.sleep(1)
+        # time.sleep(1)
         return self.api_ajax(slider_x, self.simulate(slider_x), api_get_result)  # 验证
 
     def get_and_ajax(self):
@@ -172,12 +172,37 @@ def bilibili(challenge, validate, key):
     print(response.text)
 
 
+def tyc_register():
+    url = 'https://www.tianyancha.com/verify/geetest.xhtml'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
+        'Content-Type': 'application/json; charset=UTF-8',
+    }
+    response = requests.post(url=url, headers=headers)
+    print(response.text)
+    data = json.loads(response.text)['data']
+    return data['challenge'], data['gt']
+
+
+def general_register():
+    url = 'https://www.geetest.com/demo/gt/register-slide-official?t={}'.format(int(time.time()*1000))
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
+    }
+    response = requests.get(url=url, headers=headers)
+    print(response.text)
+    data = json.loads(response.text)
+    return data['challenge'], data['gt']
+
+
 def main():
-    challenge, gt, key = register()
+    # challenge, gt, key = register()
+    # challenge, gt = tyc_register()
+    challenge, gt = general_register()
     geetest = Geetest(challenge, gt)
     validate = geetest.start()
     if validate:
-        pass
+        print('成功')
         # bilibili(geetest.challenge, validate, key)
     else:
         print('失败')
