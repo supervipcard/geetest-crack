@@ -6,12 +6,18 @@ from PIL import Image
 from io import BytesIO
 import base64
 import random
+import traceback
+from retrying import retry
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_v1_5
 from image_handle import ImageHandler
 
 
-class Geetest:
+class ForbiddenException(Exception):
+    pass
+
+
+class GeetestCrack:
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
     }
@@ -24,15 +30,32 @@ class Geetest:
         self.node = execjs.get('Node')
 
     def start(self):
-        self.get_and_ajax()  # 点击验证按钮
-        api_get_result = self.api_get()  # 获取图片
-        self.challenge = api_get_result['challenge']
-        self.gt = api_get_result['gt']
-        slider_x = self.get_pos(api_get_result['bg'], api_get_result['fullbg'])  # 获取图片缺口坐标
-        # time.sleep(1)
-        return self.api_ajax(slider_x, self.simulate(slider_x), api_get_result)  # 验证
+        if self.gettype():
+            self.get_and_ajax()
+        api_get_result = self.api_get()
+        if 'bg' in api_get_result and 'fullbg' in api_get_result:
+            self.challenge = api_get_result['challenge']  # 滑动验证码获取图片之后challenge的值会改变
+            slider_x = self.get_pos(api_get_result['bg'], api_get_result['fullbg'])
+            # time.sleep(1)
+            try:
+                validate = self.api_ajax(slider_x, api_get_result)
+            except ForbiddenException:
+                return {'code': 2002, 'msg': '验证失败'}
+            return {'code': 0, 'result': {'validate': validate, 'challenge': self.challenge}}
+        else:
+            # pic_type = api_get_result['data']['pic_type']  # 点选验证码类型（文字、图标、空间推理等）
+            return {'code': 2001, 'msg': '目前仅支持滑动类型验证码'}
+
+    def gettype(self):
+        """判断是否需要点击验证按钮"""
+        url = 'https://api.geetest.com/gettype.php?gt={gt}&callback=geetest_{t}'.format(gt=self.gt,
+                                                                                        t=int(time.time() * 1000))
+        response = self.session.get(url=url)
+        type = json.loads(response.text[22: -1])['data']['type']
+        return type == 'fullpage'
 
     def get_and_ajax(self):
+        """点击验证按钮"""
         with open('fullpage.js', 'r', encoding='utf-8') as f:
             source = f.read()
         getpass = self.node.compile(source)
@@ -53,29 +76,33 @@ class Geetest:
         self.session.get(url=ajax_url)
 
     def api_get(self):
+        """获取图片"""
         url = 'https://api.geetest.com/get.php'
         params = {
             'is_next': 'true',
-            'type': 'slide3',
+            'type': '',
             'gt': self.gt,
             'challenge': self.challenge,
             'lang': 'zh-cn',
             'https': 'true',
             'protocol': 'https://',
             'offline': 'false',
-            'product': 'embed',
+            'product': '',
             'api_server': 'api.geetest.com',
             'width': '100%',
             'callback': 'geetest_{}'.format(int(time.time() * 1000)),
         }
         response = self.session.get(url=url, params=params)
-        data = json.loads(response.text[22: -1])
-        return data
+        result = json.loads(response.text[22: -1])
+        return result
 
-    def api_ajax(self, x, points, data):
+    @retry(stop_max_attempt_number=5, wait_fixed=0)
+    def api_ajax(self, x, data):
+        """提交验证"""
         with open('slide.js', 'r', encoding='utf-8') as f:
             source = f.read()
         getpass = self.node.compile(source)
+        points = self.simulate(x)
         w = getpass.call('outside_link', x, points, data)
 
         url = 'https://api.geetest.com/ajax.php?gt={gt}&challenge={challenge}&lang={lang}&w={w}&callback=geetest_{t}'.format(
@@ -83,9 +110,12 @@ class Geetest:
         response = self.session.get(url=url)
         print(response.text)
         result = json.loads(response.text[22: -1])
-        return result.get('validate')
+        if result['message'] == 'forbidden':
+            raise ForbiddenException
+        return result['validate']
 
     def get_pos(self, bg, fullbg):
+        """获取图片缺口坐标"""
         bg_url = 'https://static.geetest.com/' + bg
         bg_response = self.session.get(url=bg_url)
         bg_image = Image.open(BytesIO(bg_response.content))
@@ -99,6 +129,7 @@ class Geetest:
 
     @staticmethod
     def simulate(pos):
+        """模拟滑动轨迹"""
         points = list()
         points.append([0, 0, 0])
         x = 0
@@ -121,7 +152,7 @@ class Geetest:
 
 
 def register():
-    url = 'https://passport.bilibili.com/web/captcha/combine?plat=11'.format(int(time.time()*1000))
+    url = 'https://passport.bilibili.com/web/captcha/combine?plat=11'.format(int(time.time() * 1000))
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
     }
@@ -185,7 +216,7 @@ def tyc_register():
 
 
 def general_register():
-    url = 'https://www.geetest.com/demo/gt/register-slide-official?t={}'.format(int(time.time()*1000))
+    url = 'https://www.geetest.com/demo/gt/register-slide-official?t={}'.format(int(time.time() * 1000))
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36',
     }
@@ -199,13 +230,16 @@ def main():
     # challenge, gt, key = register()
     # challenge, gt = tyc_register()
     challenge, gt = general_register()
-    geetest = Geetest(challenge, gt)
-    validate = geetest.start()
-    if validate:
-        print('成功')
-        # bilibili(geetest.challenge, validate, key)
-    else:
-        print('失败')
+
+    try:
+        result = GeetestCrack(challenge, gt).start()
+    except:
+        traceback.print_exc()
+        result = {'code': 2003, 'msg': '极验破解服务异常'}
+    print(result)
+
+    # if result['code'] == 0:
+    #     bilibili(result['result']['challenge'], result['result']['validate'], key)
 
 
 if __name__ == '__main__':
