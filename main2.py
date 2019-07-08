@@ -30,8 +30,18 @@ class GeetestCrack:
         self.node = execjs.get('Node')
 
     def start(self):
-        if self.gettype():
+        if self.challenge and self.gettype():
             self.get_and_ajax()
+        elif not self.challenge:
+            judge_result = self.gt_judgement()
+            self.challenge = judge_result['challenge']
+            if judge_result['result'] == 'success':
+                return {'code': 0, 'result': {'challenge': self.challenge}}
+            elif judge_result['result'] == 'slide':
+                pass
+            else:
+                return {'code': 2001, 'msg': '目前仅支持滑动类型验证码'}
+
         api_get_result = self.api_get()
         if 'bg' in api_get_result and 'fullbg' in api_get_result:
             self.challenge = api_get_result['challenge']  # 滑动验证码获取图片之后challenge的值会改变
@@ -45,6 +55,17 @@ class GeetestCrack:
         else:
             # pic_type = api_get_result['data']['pic_type']  # 点选验证码类型（文字、图标、空间推理等）
             return {'code': 2001, 'msg': '目前仅支持滑动类型验证码'}
+
+    def gt_judgement(self):
+        with open('sense.js', 'r', encoding='utf-8') as f:
+            source = f.read()
+        getpass = self.node.compile(source)
+        data = getpass.call('outside_link', self.gt)
+        url = 'https://api.geetest.com/gt_judgement?pt=0&gt={}'.format(self.gt)
+        response = requests.post(url=url, data=data)
+        print(response.text)
+        result = json.loads(response.text)
+        return result
 
     def gettype(self):
         """判断是否需要点击验证按钮"""
@@ -229,7 +250,8 @@ def general_register():
 def main():
     # challenge, gt, key = register()
     # challenge, gt = tyc_register()
-    challenge, gt = general_register()
+    # challenge, gt = general_register()
+    challenge, gt = None, '9e296fca9afdfa4703b9f4bee02820af'
 
     try:
         result = GeetestCrack(challenge, gt).start()
