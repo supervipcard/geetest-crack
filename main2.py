@@ -37,9 +37,7 @@ class GeetestCrack:
             self.challenge = judge_result['challenge']
             if judge_result['result'] == 'success':
                 return {'code': 0, 'result': {'challenge': self.challenge}}
-            elif judge_result['result'] == 'slide':
-                pass
-            else:
+            elif judge_result['result'] != 'slide':
                 return {'code': 2001, 'msg': '目前仅支持滑动类型验证码'}
 
         api_get_result = self.api_get()
@@ -63,7 +61,6 @@ class GeetestCrack:
         data = getpass.call('outside_link', self.gt)
         url = 'https://api.geetest.com/gt_judgement?pt=0&gt={}'.format(self.gt)
         response = requests.post(url=url, data=data)
-        print(response.text)
         result = json.loads(response.text)
         return result
 
