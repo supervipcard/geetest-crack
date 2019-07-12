@@ -36,9 +36,9 @@ class GeetestCrack:
             judge_result = self.gt_judgement()
             self.challenge = judge_result['challenge']
             if judge_result['result'] == 'success':
-                return {'code': 0, 'msg': '识别成功', 'data': {'challenge': self.challenge}}
+                return {'code': 0, 'message': '识别成功', 'data': {'challenge': self.challenge}}
             elif judge_result['result'] != 'slide':
-                return {'code': 2001, 'msg': '目前仅支持滑动类型验证码'}
+                return {'code': 1004, 'message': '目前仅支持滑动类型验证码'}
 
         api_get_result = self.api_get()
         if 'bg' in api_get_result and 'fullbg' in api_get_result:
@@ -48,11 +48,11 @@ class GeetestCrack:
             try:
                 validate = self.api_ajax(slider_x, api_get_result)
             except ForbiddenException:
-                return {'code': 2002, 'msg': '识别失败'}
-            return {'code': 0, 'msg': '识别成功', 'data': {'validate': validate, 'challenge': self.challenge}}
+                return {'code': 1003, 'message': '识别失败'}
+            return {'code': 0, 'message': '识别成功', 'data': {'validate': validate, 'challenge': self.challenge}}
         else:
             # pic_type = api_get_result['data']['pic_type']  # 点选验证码类型（文字、图标、空间推理等）
-            return {'code': 2001, 'msg': '目前仅支持滑动类型验证码'}
+            return {'code': 1004, 'message': '目前仅支持滑动类型验证码'}
 
     def gt_judgement(self):
         """若challenge不是由目标网站生成，则是由极验通过目标网站的gt值生成（例如拉勾、斗鱼）"""
@@ -255,7 +255,7 @@ def main():
         result = GeetestCrack(challenge, gt).start()
     except:
         traceback.print_exc()
-        result = {'code': 2003, 'msg': '极验识别服务异常'}
+        result = {'code': 1002, 'message': '极验识别服务异常'}
     print(result)
 
     # if result['code'] == 0:
