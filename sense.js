@@ -6185,6 +6185,6 @@ function xsN3f() {
 }
 
 function outside_link(gt) {
-    var aaa = total_func();
-    return aaa(gt);
+    var a = total_func();
+    return a(gt);
 }
